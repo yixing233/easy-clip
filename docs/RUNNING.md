@@ -1,6 +1,26 @@
 # 运行说明
 
-## 服务端(server/)
+## 服务端(server-node/ · Node.js 版,推荐)
+
+> 2026-08-15 起服务端由 ASP.NET Core 重写为 Node.js(TypeScript),API 契约与 SignalR 线协议完全兼容,
+> Web / WinUI3 桌面端 / Android 三个客户端零改动。原 `server/`(.NET)保留作回退备份。
+
+```powershell
+cd server-node
+npm install
+npm run build
+node dist/server.js   # 默认 :5033
+```
+
+- 配置 `server-node/config.json`(AuthToken / 端口 / 数据库路径 / 历史上限 / 图片目录 / webDist)。
+- 环境变量覆盖:`SC_PORT` `SC_AUTH_TOKEN` `SC_DB_PATH` `SC_IMAGE_PATH` `SC_MAX_HISTORY`
+  `SC_MAX_IMAGE_BYTES` `SC_ONLINE_THRESHOLD_SECONDS` `SC_WEB_DIST`。
+- 数据库直接复用 `server/data/syncclipboard.db`(表结构与 EF Core 生成一致,数据零迁移)。
+- 依赖仅 `ws`;SQLite 用 Node 内置 `node:sqlite`(Node >= 22.5,推荐 24+)。
+- 实时推送:实现 ASP.NET Core SignalR JSON 线协议(negotiate + WebSocket + 0x1E 消息分隔符),
+  支持 `ClipboardUpdated` / `ClipboardCleared` 与按 deviceId 定向推送;传输仅 WebSocket。
+
+## 服务端(server/ · .NET 旧版,仅作备份)
 
 ```powershell
 cd server
@@ -28,6 +48,7 @@ dotnet run --urls http://*:5033
 | GET | /api/images/{ref} | 图片二进制 |
 | GET | /api/devices + PUT/DELETE /api/devices/{id} | 设备列表/重命名/移除 |
 | GET | /api/stats · /api/activities · /api/health | 统计/活动/健康 |
+| POST | /api/clipboard/send | 发送到指定设备:写入共享剪贴板,实时通知只推送给 deviceIds 目标(未指定则广播全员) |
 | GET/PUT | /SyncClipboard.json | 旧协议兼容 |
 
 ## 实时推送

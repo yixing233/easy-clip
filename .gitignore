@@ -26,3 +26,6 @@ syncclipboard-client/
 
 # 日志
 *.log
+
+# 构建缓存
+*.tsbuildinfo
