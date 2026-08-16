@@ -35,11 +35,15 @@ dotnet run --urls http://*:5033
   - `DatabasePath` / `ImageStoragePath`:SQLite 库与图片目录(`data/`)
   - `OnlineThresholdSeconds`:在线判定阈值(120s;hub 连接存活时每 45s 刷新心跳)
 
-## API 鉴权(2026-08-15:全局全局令牌(已废弃,见上)已移除,仅设备令牌)
+## API 鉴权与配对(v3:配对码 + 用户ID + 生成方确认,无令牌)
 
-- **设备令牌**(配对签发,唯一凭据):全部接口——数据读写、设备管理、配对码生成、统计、hub。
-- **配对**:任何能访问服务端的人/端都可直接生成配对码(`POST /api/pairing-codes`,免认证,10 分钟一次性),设备输入配对码 `POST /api/pair` 换取专属 Token;移除设备即吊销。
-- 免认证接口仅:`POST /api/pairing-codes`、`DELETE /api/pairing-codes/{code}`、`POST /api/pair`;其余全部需要设备令牌(header `Bearer` 或 query `access_token`)。
+- **用户网页**:输入 配对码 + 用户ID → 生成方确认 → 进入(会话隐形,24h)
+- **管理台**:账密(.env)→ 管理会话(统计/用户管理/审计)
+- **设备同步**:免认证(局域网信任);配对只做登记归属
+- **配对**:任意设备生成配对码(10 分钟一次性)→ 新设备提交 码+用户ID → 生成方确认/拒绝 → 入组
+- **用户ID**:首次配对自动创建短随机ID,可自行修改(全局唯一);组内设备可代发码
+- **限速**:登录 5 次失败锁 10 分钟;配对按 IP 限速;配对码生成限速
+- **审计**:登录/配对/确认/改名/删除/清空 全记录(AuditLog,管理台可查)
 
 ## API(全部需 `Authorization: Bearer <token>`)
 
