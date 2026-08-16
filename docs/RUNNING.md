@@ -43,21 +43,25 @@ dotnet run --urls http://*:5033
 - **配对**:任意设备生成配对码(10 分钟一次性)→ 新设备提交 码+用户ID → 生成方确认/拒绝 → 入组
 - **用户ID**:首次配对自动创建短随机ID,可自行修改(全局唯一);组内设备可代发码
 - **限速**:登录 5 次失败锁 10 分钟;配对按 IP 限速;配对码生成限速
-- **审计**:登录/配对/确认/改名/删除/清空 全记录(AuditLog,管理台可查)
+- **审计**:登录/配对/确认/改名/删除/清空/设置变更 全记录(AuditLog,管理台可查)
+- **hub 推送**:用户网页会话连接"剪贴板静默"(不收全站推送,避免噪音);设备/管理台不受影响
 
-## API(全部需 `Authorization: Bearer <token>`)
+## API(设备同步类免认证;会话类需 `Authorization: Bearer <token>`)
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | /api/clipboard | 当前剪贴板(204=空) |
 | PUT | /api/clipboard | 上传文本;同内容返回 `unchanged:true` |
 | POST | /api/clipboard/image | 上传图片(multipart) |
-| GET | /api/clipboard/history?offset=&limit= | 历史分页 |
-| GET/DELETE | /api/clipboard/{id} | 单条 / 删除 |
+| GET | /api/clipboard/history?offset=&limit=&userId=&q= | 历史分页(可按用户/文本关键字过滤) |
+| GET/DELETE | /api/clipboard/{id} | 单条 / 删除(user 会话仅限本组条目) |
 | DELETE | /api/clipboard/history | 清空历史(广播 ClipboardCleared) |
 | GET | /api/images/{ref} | 图片二进制 |
 | GET | /api/devices + PUT/DELETE /api/devices/{id} | 设备列表/重命名/移除 |
-| GET | /api/stats · /api/activities · /api/health | 统计/活动/健康 |
+| GET | /api/stats · /api/activities | 统计(管理)/活动(会话) |
+| GET | /api/health | 健康检查(免认证,含版本号) |
+| GET | /api/me | 当前会话信息(用户名/角色/版本,需会话) |
+| GET/PUT | /api/admin/settings | 管理台运行设置:历史上限(持久化,改即生效) |
 | POST | /api/clipboard/send | 发送到指定设备:写入共享剪贴板,实时通知只推送给 deviceIds 目标(未指定则广播全员) |
 | POST | /api/pairing-codes · DELETE /api/pairing-codes/{code} | 生成/作废一次性配对码(管理 Token) |
 | POST | /api/pair | 配对:配对码 + deviceId/deviceName → 签发设备专属 Token(无需认证) |
