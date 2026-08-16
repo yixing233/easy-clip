@@ -35,6 +35,12 @@ dotnet run --urls http://*:5033
   - `DatabasePath` / `ImageStoragePath`:SQLite 库与图片目录(`data/`)
   - `OnlineThresholdSeconds`:在线判定阈值(120s;hub 连接存活时每 45s 刷新心跳)
 
+## API 鉴权(2026-08-15:全局全局令牌(已废弃,见上)已移除,仅设备令牌)
+
+- **设备令牌**(配对签发,唯一凭据):全部接口——数据读写、设备管理、配对码生成、统计、hub。
+- **配对**:任何能访问服务端的人/端都可直接生成配对码(`POST /api/pairing-codes`,免认证,10 分钟一次性),设备输入配对码 `POST /api/pair` 换取专属 Token;移除设备即吊销。
+- 免认证接口仅:`POST /api/pairing-codes`、`DELETE /api/pairing-codes/{code}`、`POST /api/pair`;其余全部需要设备令牌(header `Bearer` 或 query `access_token`)。
+
 ## API(全部需 `Authorization: Bearer <token>`)
 
 | 方法 | 路径 | 说明 |
@@ -49,12 +55,14 @@ dotnet run --urls http://*:5033
 | GET | /api/devices + PUT/DELETE /api/devices/{id} | 设备列表/重命名/移除 |
 | GET | /api/stats · /api/activities · /api/health | 统计/活动/健康 |
 | POST | /api/clipboard/send | 发送到指定设备:写入共享剪贴板,实时通知只推送给 deviceIds 目标(未指定则广播全员) |
+| POST | /api/pairing-codes · DELETE /api/pairing-codes/{code} | 生成/作废一次性配对码(管理 Token) |
+| POST | /api/pair | 配对:配对码 + deviceId/deviceName → 签发设备专属 Token(无需认证) |
 | GET/PUT | /SyncClipboard.json | 旧协议兼容 |
 
 ## 实时推送
 
 - Hub:`/hubs/clipboard`,认证 `?access_token=` 或 Bearer;建议带 `?deviceId=` 登记在线。
-- 事件:`ClipboardUpdated(entry)`、`ClipboardCleared()`。
+- 事件:`ClipboardUpdated(entry)`、`ClipboardCleared()`、`DevicesChanged()`(设备配对/重命名/移除后广播,各端刷新设备列表)。
 - 回显抑制:推送含来源 deviceId,各端忽略自身。
 
 ## 客户端
