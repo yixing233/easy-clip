@@ -29,3 +29,4 @@ syncclipboard-client/
 
 # 构建缓存
 *.tsbuildinfo
+.artifacts/
